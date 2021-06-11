@@ -9,7 +9,7 @@ namespace Saltsuica
         public GameObject grassPre;
         public Material grassMaterial;
 
-        List<GameObject> grassMat;
+        List<GameObject> grassObj;
 
         public int width;
         public int length;
@@ -17,12 +17,27 @@ namespace Saltsuica
         public float grassSize = 1;
         public float grassHeight = 1;
 
+        // wind area
+        public float windAngle = 45f;
+        public float windStrength = 1f;
+
+        Vector2 windDir = new Vector2(0, 0);
+
         List<MeshFilter> meshFilters = new List<MeshFilter>();
         CombineInstance[] combines;
 
         private void Start() {
-            grassMat = new List<GameObject>();
+            grassObj = new List<GameObject>();
             GenerateGrass();
+        }
+
+        private void Update() {
+            Shader.SetGlobalFloat ("_WindDirectionX", windDir.x);
+            Shader.SetGlobalFloat ("_WindDirectionZ", windDir.y);
+            Shader.SetGlobalFloat ("_WindStrength", windStrength);
+
+            float shakeBending = Mathf.Lerp(0.5f, 2f, windStrength);
+            Shader.SetGlobalFloat("_ShakeBending", shakeBending);
         }
 
         void GenerateGrass()
@@ -44,7 +59,7 @@ namespace Saltsuica
                     go.transform.rotation = go.transform.rotation * Quaternion.AngleAxis(angle, Vector3.up);
                     go.transform.localScale = scale;
                     go.transform.position = transform.position + offset;
-                    grassMat.Add(go);
+                    grassObj.Add(go);
                 }
             }
 
@@ -54,6 +69,7 @@ namespace Saltsuica
                 combines[i].mesh = meshFilters[i].sharedMesh;
                 combines[i].transform = meshFilters[i].transform.localToWorldMatrix;
                 meshFilters[i].transform.parent.gameObject.SetActive(false);
+                // Destroy()
                 
             }
             transform.gameObject.AddComponent<MeshFilter>();
@@ -63,5 +79,14 @@ namespace Saltsuica
             meshRender.material = grassMaterial;
             transform.gameObject.SetActive(true);
         }
+
+        private Vector2 GetWindDirByDeg(float angle)
+        {
+            float rad = angle * Mathf.Deg2Rad;
+            var dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+            return dir.normalized;
+        }
     }
+
+
 }
